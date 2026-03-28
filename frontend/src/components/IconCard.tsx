@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { IconSearchItem } from "../lib/types";
 import { downloadIconPng, getIconSvg } from "../lib/api";
+import { getLibraryLabel } from "../lib/iconLibraries";
+import { getLicenseForLibrary } from "../lib/licenses";
 
 async function safeClipboardWrite(text: string): Promise<void> {
   if (navigator.clipboard?.writeText) {
@@ -85,26 +87,9 @@ export default function IconCard(props: { icon: IconSearchItem }) {
   }, [toast]);
 
   const embedCode = useMemo(() => svg ?? "", [svg]);
-  const libraryLabel =
-    props.icon.library === "material"
-      ? "Material Design Icons"
-      : props.icon.library === "fontawesome"
-        ? "Font Awesome Free"
-        : props.icon.library === "heroicons"
-          ? "Heroicons"
-          : props.icon.library === "lucide"
-            ? "Lucide"
-            : props.icon.library === "phosphor"
-              ? "Phosphor Icons"
-              : props.icon.library === "material-symbols"
-                ? "Material Symbols"
-                : props.icon.library === "remix"
-                  ? "Remix Icon"
-                  : props.icon.library === "iconoir"
-                    ? "Iconoir"
-                    : props.icon.library === "bootstrap"
-                      ? "Bootstrap Icons"
-                      : "Icon library";
+  const libraryLabel = getLibraryLabel(props.icon.library);
+  const licenseMeta = getLicenseForLibrary(props.icon.library);
+  const licenseTooltip = `${licenseMeta.license} — ${licenseMeta.name}. Open Licenses for full terms.`;
 
   function showToast(kind: CopyKind, message: string) {
     toastIdRef.current += 1;
@@ -169,12 +154,44 @@ export default function IconCard(props: { icon: IconSearchItem }) {
       <div className="mb-3 flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <div className="truncate text-base font-bold text-zinc-100">{props.icon.name}</div>
-          <div className="mt-0.5 truncate text-[13px] font-medium text-zinc-400">{libraryLabel}</div>
+          <div className="mt-0.5 flex min-w-0 items-center gap-1">
+            <span className="truncate text-[13px] font-medium text-zinc-400">{libraryLabel}</span>
+            <button
+              type="button"
+              className="shrink-0 rounded p-0.5 text-zinc-500 transition hover:bg-zinc-800 hover:text-zinc-300"
+              title={licenseTooltip}
+              aria-label={licenseTooltip}
+            >
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 16v-4M12 8h.01" strokeLinecap="round" />
+              </svg>
+            </button>
+            {props.icon.licenseStatus === "unknown" ? (
+              <span className="shrink-0 rounded bg-amber-500/15 px-1.5 py-px text-[10px] font-medium text-amber-400/95">
+                License unknown
+              </span>
+            ) : null}
+          </div>
         </div>
         <span className="shrink-0 rounded-full bg-white px-2.5 py-0.5 text-[12px] font-semibold capitalize text-zinc-900">
           {styleLabel(props.icon.style)}
         </span>
       </div>
+
+      {props.icon.sourceUrl ? (
+        <div className="mb-2 text-[11px] leading-snug text-zinc-500">
+          <a
+            href={props.icon.sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-emerald-500/90 underline decoration-emerald-500/30 underline-offset-2 hover:text-emerald-400"
+          >
+            Original source
+          </a>
+          <span className="text-zinc-600"> · verify license on the provider page</span>
+        </div>
+      ) : null}
 
       <div className="mb-4 flex aspect-square w-full items-center justify-center rounded-xl bg-zinc-800 ring-1 ring-inset ring-white/[0.06]">
         {loadingSvg ? (

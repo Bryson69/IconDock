@@ -17,6 +17,10 @@ export type IconSearchItem = {
   style: string;
   styles: string[];
   tags: string[];
+  /** Original listing URL when the source is aggregated (e.g. SVG Repo). */
+  sourceUrl?: string;
+  /** When source metadata is missing for restricted/aggregated sources, UI may flag the row. */
+  licenseStatus?: "ok" | "unknown";
 };
 
 export type IconSearchResponse = {
@@ -32,6 +36,8 @@ export type IconByIdResponse = {
   library: IconLibraryId;
   tags: string[];
   svg: string;
+  sourceUrl?: string;
+  licenseStatus?: "ok" | "unknown";
 };
 
 export type LibrariesResponse = {

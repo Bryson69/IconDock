@@ -21,6 +21,11 @@ export type LibraryRow = { id: IconLibraryId; label: string; count: number };
  */
 const CANONICAL_IDS = new Set(CANONICAL_ICON_LIBRARIES.map((l) => l.id));
 
+export function getLibraryLabel(id: IconLibraryId): string {
+  const row = CANONICAL_ICON_LIBRARIES.find((l) => l.id === id);
+  return row?.label ?? id;
+}
+
 export function mergeLibraryCounts(
   apiLibs: Array<{ id: IconLibraryId; label?: string; count?: number | null }> | undefined
 ): LibraryRow[] {

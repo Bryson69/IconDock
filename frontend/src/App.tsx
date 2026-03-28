@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import FiltersBar from "./components/FiltersBar";
 import IconGrid from "./components/IconGrid";
+import LicensesModal from "./components/LicensesModal";
 import { getLibraries, searchIcons } from "./lib/api";
 import IconDockLogo from "./components/IconDockLogo";
 import { mergeLibraryCounts } from "./lib/iconLibraries";
 import type { IconLibraryId, IconSearchItem, IconStyleGroup } from "./lib/types";
 import { useDebouncedValue } from "./lib/useDebouncedValue";
+import { OWNERSHIP_DISCLAIMER } from "./lib/licenses";
 
 export default function App() {
   const [libraries, setLibraries] = useState<
@@ -24,6 +26,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [licensesOpen, setLicensesOpen] = useState(false);
   const pageSize = 120;
   const [offset, setOffset] = useState(0);
 
@@ -150,6 +153,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-zinc-950 bg-[radial-gradient(ellipse_85%_55%_at_50%_-18%,rgba(255,255,255,0.04),transparent)]">
+      <LicensesModal open={licensesOpen} onClose={() => setLicensesOpen(false)} />
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
         <div className="flex flex-col gap-8">
           <header>
@@ -241,8 +245,19 @@ export default function App() {
             </>
           )}
 
-          <footer className="pt-4 text-xs text-zinc-500">
-            Built to be extension-ready: all icon data is served via a stable REST API.
+          <footer className="space-y-3 border-t border-zinc-800/60 pt-6 text-xs text-zinc-500">
+            <p className="max-w-2xl leading-relaxed text-zinc-500">{OWNERSHIP_DISCLAIMER}</p>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+              <button
+                type="button"
+                onClick={() => setLicensesOpen(true)}
+                className="font-medium text-emerald-500/90 underline decoration-emerald-500/25 underline-offset-2 transition hover:text-emerald-400 hover:decoration-emerald-400/50"
+              >
+                Licenses & attribution
+              </button>
+              <span className="hidden text-zinc-700 sm:inline">·</span>
+              <span>API: stable REST endpoints for search and assets.</span>
+            </div>
           </footer>
         </div>
       </div>

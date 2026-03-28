@@ -173,6 +173,7 @@ async function buildMaterial(): Promise<BuiltIcon[]> {
 }
 
 async function buildFontAwesome(): Promise<BuiltIcon[]> {
+  // Only the published `fontawesome-free` package is indexed. Pro icons are not on disk here and are never included.
   const base = path.join(NODE_MODULES_DIR, "@fortawesome/fontawesome-free/svgs");
   const variants: Array<"solid" | "regular" | "brands"> = ["solid", "regular", "brands"];
 

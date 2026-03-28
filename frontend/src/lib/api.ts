@@ -71,3 +71,4 @@ export async function downloadIconPng(id: string, size: number): Promise<Blob> {
 
 export type { IconSearchItem };
 
+
