@@ -1,0 +1,102 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Inter bundled via @fontsource/inter in main.tsx */
+  html,
+  body {
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+  }
+
+  body {
+    @apply antialiased tracking-tight bg-zinc-950 text-zinc-100;
+  }
+}
+
+@layer components {
+  /**
+   * Glass search pill — plain CSS so blur always applies.
+   * Do NOT put transform/scale on an ancestor of this node: it breaks backdrop-filter in WebKit/Blink.
+   */
+  .icondock-search-field {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    width: 100%;
+    min-height: 2.75rem;
+    align-items: center;
+    overflow: hidden;
+    border-radius: 9999px;
+    border: 1px solid rgb(39 39 42);
+    background-color: rgba(39, 39, 42, 0.72);
+    backdrop-filter: blur(14px) saturate(1.15);
+    -webkit-backdrop-filter: blur(14px) saturate(1.15);
+    box-shadow: none;
+    transition: border-color 150ms ease-out;
+  }
+
+  /* Active = focused or has text — brand outline only, no glow */
+  .icondock-search-field--active {
+    border-color: #59b687;
+  }
+
+  input.search-input-glass:-webkit-autofill,
+  input.search-input-glass:-webkit-autofill:hover,
+  input.search-input-glass:-webkit-autofill:focus {
+    -webkit-text-fill-color: #fafafa;
+    caret-color: #fafafa;
+    box-shadow: 0 0 0 1000px rgb(39 39 42 / 0.55) inset;
+    transition: background-color 99999s ease-out;
+  }
+
+  /**
+   * Suggestions panel — portaled to body so backdrop-filter blurs the page, not trapped
+   * inside the filters card (nested backdrop-filter stacks poorly in WebKit).
+   */
+  .icondock-search-dropdown {
+    max-height: 15rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border-radius: 0.75rem;
+    border: 1px solid #59b687;
+    padding: 0.35rem 0;
+    background-color: rgba(9, 9, 11, 0.72);
+    backdrop-filter: blur(20px) saturate(1.25);
+    -webkit-backdrop-filter: blur(20px) saturate(1.25);
+    box-shadow: none;
+    isolation: isolate;
+    scrollbar-color: rgb(63 63 70) rgb(24 24 27);
+  }
+
+  .icondock-search-dropdown::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .icondock-search-dropdown::-webkit-scrollbar-track {
+    background: rgb(24 24 27);
+    border-radius: 4px;
+  }
+
+  .icondock-search-dropdown::-webkit-scrollbar-thumb {
+    background: rgb(63 63 70);
+    border-radius: 4px;
+  }
+
+  .icondock-search-dropdown-section-title {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    margin: 0 0.5rem;
+    padding: 0.35rem 0.5rem 0.25rem;
+    font-size: 0.625rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgb(113 113 122);
+    background-color: rgba(9, 9, 11, 0.92);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+}
+

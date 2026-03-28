@@ -1,0 +1,6 @@
+{
+  "name": "IconDock",
+  "apiVersion": "2",
+  "size": "large",
+  "publicDir": "dist"
+}
