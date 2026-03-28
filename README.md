@@ -84,15 +84,15 @@ With the backend running and env vars set:
 
 ### Run the extension locally
 
-1. Start the IconDock API: `cd backend && npm run dev`.
-2. Point the extension build at the API (Designer iframe is not same-origin as your API):
+1. Start the IconDock API: `cd backend && npm run dev` (default **:8787**).
+2. Build the extension UI:
 
    ```sh
    cd frontend
-   cp .env.example .env.local
-   # Set VITE_API_BASE_URL=http://localhost:8787 in .env.local
    npm run build
    ```
+
+   `webflow extension serve` defaults to **`http://localhost:1337`**, which only serves static files — **not** `/api`. Without `VITE_API_BASE_URL`, the app detects `localhost:1337` and sends API requests to **`http://localhost:8787`**. For a remote API or a different port, set `VITE_API_BASE_URL` in `.env.local` before `npm run build`.
 
 3. From `frontend`, run:
 
@@ -108,11 +108,22 @@ With the backend running and env vars set:
    npm run webflow:bundle
    ```
 
-The UI calls `webflow.ready()` when the global `webflow` object exists (Designer only).
+The UI calls `webflow.ready()` when the global `webflow` object exists (Designer only), then `setExtensionSize("large")` when supported (same pattern as Webflow’s official walkthrough).
 
-### CORS
+### CORS (Designer Extension iframe)
 
-The backend uses open CORS for API routes. For a public API, restrict origins in your reverse proxy or `cors` configuration to Webflow and your app domains.
+Webflow’s [“Start building with Webflow Apps”](https://youtu.be/rfEkIB0_ZDA) tutorial stresses allowing your **Designer Extension origin** on the backend so `fetch` from the iframe succeeds.
+
+IconDock’s backend (`backend/src/corsOptions.ts`):
+
+- **Default:** permissive CORS (`origin: true`) so existing standalone sites and `npm run dev` + proxy still work.
+- **`CORS_MODE=strict`:** allow only `localhost`, `https://*.webflow-ext.com` (toggle with `CORS_ALLOW_WEBFLOW_EXT`), and **`CORS_ORIGINS`** — use this when the API should only talk to Webflow + known web apps.
+
+Set `VITE_API_BASE_URL` in the frontend to wherever the API is reachable from the extension.
+
+### vs. Webflow’s hybrid app starter
+
+The [hybrid-app-starter](https://github.com/Webflow-Examples/hybrid-app-starter) (Next.js + token bridge + DB) adds OAuth **callback**, **session/JWT exchange** between the Data Client and Designer, and Data API demos (custom code, elements). IconDock is **Designer + this repo’s REST API**; add that stack only if you need authorized Webflow Data API calls from the extension.
 
 ## Extension-ready structure (bonus)
 

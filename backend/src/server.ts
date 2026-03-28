@@ -1,13 +1,14 @@
 import compression from "compression";
 import cors from "cors";
 import express from "express";
+import { createCorsOptions } from "./corsOptions.js";
 import { iconsRouter } from "./routes/icons.js";
 import { webflowOAuthRouter } from "./routes/oauthWebflow.js";
 
 const app = express();
 app.disable("x-powered-by");
 app.use(compression());
-app.use(cors());
+app.use(cors(createCorsOptions()));
 app.use(express.json({ limit: "1mb" }));
 
 app.get("/api/health", (_req, res) => {

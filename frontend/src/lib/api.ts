@@ -7,10 +7,28 @@ import type {
   LibrariesResponse
 } from "./types";
 
-/** In the Designer iframe the app origin is Webflow, not your API — set `VITE_API_BASE_URL` to the IconDock backend. */
-function apiUrl(path: string): string {
+/**
+ * API origin for `/api/*` calls.
+ * - Production / Webflow iframe: set `VITE_API_BASE_URL` at build time.
+ * - `webflow extension serve` uses port **1337** by default — relative `/api` hits that static server and returns 404,
+ *   so we default the backend to `http://localhost:8787` when the UI is opened on localhost:1337 without an env base.
+ */
+function resolveApiBase(): string {
   const raw = import.meta.env.VITE_API_BASE_URL as string | undefined;
-  const base = raw == null || raw === "" ? "" : raw.replace(/\/$/, "");
+  if (raw != null && raw.trim() !== "") {
+    return raw.replace(/\/$/, "");
+  }
+  if (typeof window !== "undefined") {
+    const { hostname, port } = window.location;
+    if (hostname === "localhost" && port === "1337") {
+      return "http://localhost:8787";
+    }
+  }
+  return "";
+}
+
+function apiUrl(path: string): string {
+  const base = resolveApiBase();
   const p = path.startsWith("/") ? path : `/${path}`;
   return `${base}${p}`;
 }
