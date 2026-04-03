@@ -25,6 +25,49 @@ webflowOAuthRouter.get("/status", (_req, res) => {
   });
 });
 
+/** JSON only: same authorize URL as GET /authorize, for debugging redirect_uri without redirecting. */
+webflowOAuthRouter.get("/authorize-debug", (_req, res) => {
+  const clientId = process.env.WEBFLOW_CLIENT_ID?.trim();
+  if (!clientId) {
+    res.status(500).json({ error: "WEBFLOW_CLIENT_ID is not set" });
+    return;
+  }
+  const redirectUri = process.env.WEBFLOW_REDIRECT_URI?.trim();
+  if (!redirectUri) {
+    res.status(500).json({ error: "WEBFLOW_REDIRECT_URI is not set" });
+    return;
+  }
+  const authorizeUrl = WebflowClient.authorizeURL({
+    clientId,
+    redirectUri,
+    scope: oauthScopesFromEnv()
+  });
+  let redirectUriInAuthorizeUrl: string | null = null;
+  try {
+    redirectUriInAuthorizeUrl = new URL(authorizeUrl).searchParams.get("redirect_uri");
+  } catch {
+    // ignore
+  }
+  const redirectUriDecoded =
+    redirectUriInAuthorizeUrl != null
+      ? (() => {
+          try {
+            return decodeURIComponent(redirectUriInAuthorizeUrl);
+          } catch {
+            return redirectUriInAuthorizeUrl;
+          }
+        })()
+      : null;
+  res.json({
+    redirectUriFromEnv: redirectUri,
+    redirectUriInAuthorizeQuery: redirectUriInAuthorizeUrl,
+    redirectUriDecoded,
+    authorizeUrl,
+    hint:
+      "redirectUriDecoded must match Webflow’s Redirect URI field. If install still fails, Webflow’s install screen may use a different OAuth client than this server — ensure WEBFLOW_CLIENT_ID matches that app."
+  });
+});
+
 webflowOAuthRouter.get("/authorize", (_req, res) => {
   const clientId = process.env.WEBFLOW_CLIENT_ID?.trim();
   if (!clientId) {

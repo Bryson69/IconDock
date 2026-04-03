@@ -9,6 +9,7 @@ backend/dist/
 .env
 .env.*
 !.env.example
+!.env.production.example
 
 # Logs and OS
 *.log
