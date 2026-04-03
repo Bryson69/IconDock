@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import ElementDashboard from "./components/ElementDashboard";
 import FiltersBar from "./components/FiltersBar";
 import IconGrid from "./components/IconGrid";
 import LicensesModal from "./components/LicensesModal";
@@ -168,6 +169,8 @@ export default function App() {
               </div>
             </div>
           </header>
+
+          <ElementDashboard />
 
           <FiltersBar
             query={query}

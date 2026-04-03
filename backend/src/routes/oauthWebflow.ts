@@ -14,13 +14,31 @@ function oauthScopesFromEnv(): OauthScope[] {
  */
 export const webflowOAuthRouter = Router();
 
+webflowOAuthRouter.get("/status", (_req, res) => {
+  const redirectUri = process.env.WEBFLOW_REDIRECT_URI?.trim() ?? "";
+  res.json({
+    clientIdSet: Boolean(process.env.WEBFLOW_CLIENT_ID?.trim()),
+    clientSecretSet: Boolean(process.env.WEBFLOW_CLIENT_SECRET?.trim()),
+    redirectUri,
+    hint:
+      "Use this exact redirect URI in Webflow → Workspace → Apps → your app → Data Client → Redirect URI (including http/https and path)."
+  });
+});
+
 webflowOAuthRouter.get("/authorize", (_req, res) => {
-  const clientId = process.env.WEBFLOW_CLIENT_ID;
+  const clientId = process.env.WEBFLOW_CLIENT_ID?.trim();
   if (!clientId) {
     res.status(500).json({ error: "WEBFLOW_CLIENT_ID is not set" });
     return;
   }
-  const redirectUri = process.env.WEBFLOW_REDIRECT_URI;
+  const redirectUri = process.env.WEBFLOW_REDIRECT_URI?.trim();
+  if (!redirectUri) {
+    res.status(500).json({
+      error: "WEBFLOW_REDIRECT_URI is not set",
+      hint: "Set WEBFLOW_REDIRECT_URI in backend/.env to e.g. http://localhost:8787/api/oauth/webflow/callback and add the same URL in your Webflow app’s Data Client settings."
+    });
+    return;
+  }
   const url = WebflowClient.authorizeURL({
     clientId,
     redirectUri,
@@ -31,12 +49,16 @@ webflowOAuthRouter.get("/authorize", (_req, res) => {
 
 /** Same as GET /authorize but returns JSON so a Designer Extension can `window.open(url)`. */
 webflowOAuthRouter.get("/authorize-url", (_req, res) => {
-  const clientId = process.env.WEBFLOW_CLIENT_ID;
+  const clientId = process.env.WEBFLOW_CLIENT_ID?.trim();
   if (!clientId) {
     res.status(500).json({ error: "WEBFLOW_CLIENT_ID is not set" });
     return;
   }
-  const redirectUri = process.env.WEBFLOW_REDIRECT_URI;
+  const redirectUri = process.env.WEBFLOW_REDIRECT_URI?.trim();
+  if (!redirectUri) {
+    res.status(500).json({ error: "WEBFLOW_REDIRECT_URI is not set" });
+    return;
+  }
   const url = WebflowClient.authorizeURL({
     clientId,
     redirectUri,
@@ -57,9 +79,9 @@ webflowOAuthRouter.get("/callback", async (req, res) => {
     return;
   }
 
-  const clientId = process.env.WEBFLOW_CLIENT_ID;
-  const clientSecret = process.env.WEBFLOW_CLIENT_SECRET;
-  const redirectUri = process.env.WEBFLOW_REDIRECT_URI;
+  const clientId = process.env.WEBFLOW_CLIENT_ID?.trim();
+  const clientSecret = process.env.WEBFLOW_CLIENT_SECRET?.trim();
+  const redirectUri = process.env.WEBFLOW_REDIRECT_URI?.trim();
   if (!clientId || !clientSecret || !redirectUri) {
     res.status(500).json({ error: "WEBFLOW_CLIENT_ID, WEBFLOW_CLIENT_SECRET, and WEBFLOW_REDIRECT_URI must be set" });
     return;

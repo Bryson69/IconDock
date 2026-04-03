@@ -8,11 +8,14 @@ import App from "./App";
 import "./styles/tailwind.css";
 import { initWebflowDesigner } from "./webflow/initDesigner";
 
-void initWebflowDesigner().then(() => {
-  ReactDOM.createRoot(document.getElementById("root")!).render(
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>
-  );
+// Never block the first paint on `webflow.ready()` — if it rejects, the panel would stay blank.
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+
+void initWebflowDesigner().catch(() => {
+  // Non-fatal; ElementDashboard and other APIs call `ready()` when needed.
 });
 

@@ -131,7 +131,9 @@ function variantToStyle(variant: string, library: IconLibraryId): string {
   if (library === "heroicons") return v.includes("outline") ? "outline" : "filled";
   if (library === "phosphor") return v;
   if (library === "bootstrap") return "filled";
-  if (library === "lucide" || library === "iconoir") return "outline";
+  if (library === "lucide") return "outline";
+  // Iconoir npm package: `icons/regular` (stroke) vs `icons/solid` (filled). Must not merge into one variant.
+  if (library === "iconoir") return v === "solid" ? "filled" : "outline";
   if (library === "remix") return v.includes("fill") ? "filled" : "outline";
   return v;
 }
@@ -349,7 +351,12 @@ async function run() {
       ? buildGenericLibrary({
           library: "iconoir",
           sourceDirs: [path.join(NODE_MODULES_DIR, "iconoir/icons")],
-          variantFromPath: () => "outline"
+          variantFromPath: (rel) => {
+            const first = rel.split(path.sep)[0] || "";
+            if (first === "solid") return "solid";
+            if (first === "regular") return "regular";
+            return first || "regular";
+          }
         })
       : Promise.resolve([]),
     libsToBuild.includes("bootstrap")

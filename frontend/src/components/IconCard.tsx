@@ -1,8 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { IconSearchItem } from "../lib/types";
-import { downloadIconPng, getIconSvg } from "../lib/api";
+import { getIconSvg } from "../lib/api";
 import { getLibraryLabel } from "../lib/iconLibraries";
 import { getLicenseForLibrary } from "../lib/licenses";
+import { simplifySvgForClipboard } from "../lib/svgClipboard";
+import { insertPngOnCanvas } from "../webflow/insertPngOnCanvas";
+import { insertSvgOnCanvas } from "../webflow/insertSvgOnCanvas";
 
 async function safeClipboardWrite(text: string): Promise<void> {
   if (navigator.clipboard?.writeText) {
@@ -25,7 +28,8 @@ function styleLabel(s: string) {
   return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 }
 
-type CopyKind = "svg" | "embed" | "png";
+type CopyKind = "svg" | "png";
+type BusyKind = CopyKind | "insert" | "insertPng";
 
 /** e.g. "file-arrow-down" → "file arrow down" for toast copy */
 function iconNameForToast(name: string): string {
@@ -38,9 +42,8 @@ function iconNameForToast(name: string): string {
 
 function toastMessage(kind: CopyKind, iconName: string): string {
   const n = iconNameForToast(iconName);
-  if (kind === "svg") return `Pasted ${n} svg`;
-  if (kind === "embed") return `Pasted ${n} embed`;
-  return `Pasted ${n} png`;
+  if (kind === "svg") return `Copied ${n} SVG`;
+  return `Inserted ${n} PNG on the canvas`;
 }
 
 export default function IconCard(props: { icon: IconSearchItem }) {
@@ -48,7 +51,7 @@ export default function IconCard(props: { icon: IconSearchItem }) {
   const [svg, setSvg] = useState<string | null>(null);
   const [loadingSvg, setLoadingSvg] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [busyAction, setBusyAction] = useState<CopyKind | null>(null);
+  const [busyAction, setBusyAction] = useState<BusyKind | null>(null);
   /** Toast shown after copy / save; cleared when CSS animation finishes. */
   const [toast, setToast] = useState<{ id: number; kind: CopyKind; message: string } | null>(null);
   const toastIdRef = useRef(0);
@@ -83,10 +86,9 @@ export default function IconCard(props: { icon: IconSearchItem }) {
   useEffect(() => {
     if (!toast) return;
     const t = window.setTimeout(() => setToast(null), 2000);
-    return () => clearTimeout(t);
+    return () => window.clearTimeout(t);
   }, [toast]);
 
-  const embedCode = useMemo(() => svg ?? "", [svg]);
   const libraryLabel = getLibraryLabel(props.icon.library);
   const licenseMeta = getLicenseForLibrary(props.icon.library);
   const licenseTooltip = `${licenseMeta.license} — ${licenseMeta.name}. Open Licenses for full terms.`;
@@ -104,38 +106,59 @@ export default function IconCard(props: { icon: IconSearchItem }) {
     if (!svg) return;
     setBusyAction("svg");
     try {
-      await safeClipboardWrite(svg);
+      let text: string;
+      try {
+        text = simplifySvgForClipboard(svg);
+      } catch {
+        text = svg;
+      }
+      await safeClipboardWrite(text);
       showToast("svg", toastMessage("svg", props.icon.name));
     } finally {
       setBusyAction(null);
     }
   }
 
-  async function onCopyEmbed() {
+  async function onInsertOnCanvas() {
     if (!svg) return;
-    setBusyAction("embed");
+    setBusyAction("insert");
     try {
-      await safeClipboardWrite(embedCode);
-      showToast("embed", toastMessage("embed", props.icon.name));
+      const result = await insertSvgOnCanvas(svg);
+      if (result.ok) {
+        toastIdRef.current += 1;
+        setToast({
+          id: toastIdRef.current,
+          kind: "svg",
+          message: `Inserted ${iconNameForToast(props.icon.name)} on the canvas`
+        });
+      } else {
+        toastIdRef.current += 1;
+        setToast({
+          id: toastIdRef.current,
+          kind: "svg",
+          message: result.message
+        });
+      }
     } finally {
       setBusyAction(null);
     }
   }
 
-  async function onDownloadPng() {
+  async function onInsertPngOnCanvas() {
     if (!svg) return;
-    setBusyAction("png");
+    setBusyAction("insertPng");
     try {
-      const blob = await downloadIconPng(props.icon.id, 512);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${props.icon.name}.png`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-      showToast("png", toastMessage("png", props.icon.name));
+      const result = await insertPngOnCanvas(props.icon.id, props.icon.name);
+      if (result.ok) {
+        showToast("png", toastMessage("png", props.icon.name));
+      } else {
+        toastIdRef.current += 1;
+        setToast({
+          id: toastIdRef.current,
+          kind: "svg",
+          message: result.message
+        });
+      }
     } finally {
       setBusyAction(null);
     }
@@ -143,8 +166,14 @@ export default function IconCard(props: { icon: IconSearchItem }) {
 
   const busy = busyAction !== null;
 
-  const btnClass =
-    "relative z-0 w-full rounded-full border border-white/20 bg-zinc-800/35 px-3 py-2.5 text-center text-xs font-medium text-zinc-100 transition hover:border-white/30 hover:bg-zinc-800/55 disabled:opacity-40";
+  /**
+   * Default: grey outline, transparent fill, light text.
+   * Hover: forest-green border, mint text, near-black with a hint of dark green (matches reference).
+   */
+  const dockBtnClass =
+    "relative z-0 w-full rounded-full border border-zinc-600/50 bg-transparent px-3 py-2.5 text-center text-xs font-medium text-zinc-100 transition-colors duration-150 " +
+    "hover:border-emerald-800/95 hover:bg-emerald-950/45 hover:text-emerald-200 " +
+    "disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-zinc-600/50 disabled:hover:bg-transparent disabled:hover:text-zinc-100";
 
   return (
     <div
@@ -200,7 +229,7 @@ export default function IconCard(props: { icon: IconSearchItem }) {
           <span className="text-xs text-red-400/90">?</span>
         ) : svg ? (
           <div
-            className="iconSvg flex h-[55%] w-[55%] items-center justify-center text-zinc-100 [&>svg]:h-full [&>svg]:w-full [&>svg]:fill-current"
+            className="iconSvg flex h-[55%] w-[55%] items-center justify-center text-zinc-100 [&>svg]:h-full [&>svg]:w-full [&>svg]:shrink-0 [&>svg]:overflow-visible"
             // eslint-disable-next-line react/no-danger
             dangerouslySetInnerHTML={{ __html: svg }}
           />
@@ -223,14 +252,32 @@ export default function IconCard(props: { icon: IconSearchItem }) {
           </div>
         ) : null}
         <div className="flex flex-col gap-2">
-          <button type="button" onClick={onCopySvg} disabled={!svg || busy} className={btnClass}>
-            {busyAction === "svg" ? "…" : "Paste as SVG"}
+          <button
+            type="button"
+            onClick={onInsertOnCanvas}
+            disabled={!svg || busy}
+            className={dockBtnClass}
+            title="Adds the SVG inside the selected element on the canvas (uses icondock-icon class). Open the Webflow Designer app to use this."
+          >
+            {busyAction === "insert" ? "…" : "Insert SVG on Canvas"}
           </button>
-          <button type="button" onClick={onCopyEmbed} disabled={!svg || busy} className={btnClass}>
-            {busyAction === "embed" ? "…" : "Paste as Embed"}
+          <button
+            type="button"
+            onClick={onCopySvg}
+            disabled={!svg || busy}
+            className={dockBtnClass}
+            title="Minimal &lt;svg&gt; with paths only — paste into Webflow or your editor"
+          >
+            {busyAction === "svg" ? "…" : "Copy SVG code"}
           </button>
-          <button type="button" onClick={onDownloadPng} disabled={!svg || busy} className={btnClass}>
-            {busyAction === "png" ? "…" : "Paste as PNG"}
+          <button
+            type="button"
+            onClick={onInsertPngOnCanvas}
+            disabled={!svg || busy}
+            className={dockBtnClass}
+            title="Uploads PNG to Assets and inserts an Image in the selected container. Open the Webflow Designer app to use this."
+          >
+            {busyAction === "insertPng" ? "…" : "Insert PNG on Canvas"}
           </button>
         </div>
       </div>
