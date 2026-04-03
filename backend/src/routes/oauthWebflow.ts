@@ -7,23 +7,25 @@ function oauthScopesFromEnv(): OauthScope[] {
   return raw.split(/\s+/).filter(Boolean) as OauthScope[];
 }
 
-/**
- * Exchange auth code for access token. Uses `application/x-www-form-urlencoded` (RFC 6749),
- * which Webflow’s token endpoint expects; the `webflow-api` SDK uses JSON and can trigger
- * misleading `invalid_redirect_uri` responses for some apps.
- */
-async function exchangeAuthorizationCode(args: {
+function normalizeRedirectUri(u: string): string {
+  return u.trim().replace(/\u200B/g, "");
+}
+
+async function exchangeTokenForm(args: {
   clientId: string;
   clientSecret: string;
   code: string;
   redirectUri: string;
+  includeRedirectUri: boolean;
 }): Promise<string> {
   const params = new URLSearchParams();
   params.set("client_id", args.clientId);
   params.set("client_secret", args.clientSecret);
   params.set("code", args.code);
   params.set("grant_type", "authorization_code");
-  params.set("redirect_uri", args.redirectUri);
+  if (args.includeRedirectUri) {
+    params.set("redirect_uri", args.redirectUri);
+  }
 
   const tokenRes = await fetch("https://api.webflow.com/oauth/access_token", {
     method: "POST",
@@ -46,6 +48,62 @@ async function exchangeAuthorizationCode(args: {
     throw new Error("Missing access_token in token response");
   }
   return json.access_token;
+}
+
+/**
+ * Tries several token requests. Webflow’s install flow may omit `redirect_uri` on the
+ * authorize step (using the single registered URI); RFC 6749 then requires omitting it on
+ * the token step too—sending `redirect_uri` here can yield `invalid_redirect_uri`.
+ */
+async function exchangeAuthorizationCode(args: {
+  clientId: string;
+  clientSecret: string;
+  code: string;
+  redirectUri: string;
+}): Promise<string> {
+  const redirectUri = normalizeRedirectUri(args.redirectUri);
+  const attempts: Array<{ label: string; run: () => Promise<string> }> = [
+    {
+      label: "form-urlencoded with redirect_uri",
+      run: () =>
+        exchangeTokenForm({
+          ...args,
+          redirectUri,
+          includeRedirectUri: true
+        })
+    },
+    {
+      label: "form-urlencoded without redirect_uri (install flows that omit it on authorize)",
+      run: () =>
+        exchangeTokenForm({
+          ...args,
+          redirectUri,
+          includeRedirectUri: false
+        })
+    },
+    {
+      label: "JSON body (webflow-api SDK)",
+      run: () =>
+        WebflowClient.getAccessToken({
+          clientId: args.clientId,
+          clientSecret: args.clientSecret,
+          code: args.code,
+          redirectUri
+        })
+    }
+  ];
+
+  const failures: string[] = [];
+  for (const { label, run } of attempts) {
+    try {
+      return await run();
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      failures.push(`${label}: ${msg}`);
+    }
+  }
+
+  throw new Error(failures.join("\n\n---\n\n"));
 }
 
 /**
@@ -165,11 +223,12 @@ webflowOAuthRouter.get("/callback", async (req, res) => {
 
   const clientId = process.env.WEBFLOW_CLIENT_ID?.trim();
   const clientSecret = process.env.WEBFLOW_CLIENT_SECRET?.trim();
-  const redirectUri = process.env.WEBFLOW_REDIRECT_URI?.trim();
-  if (!clientId || !clientSecret || !redirectUri) {
+  const redirectUriRaw = process.env.WEBFLOW_REDIRECT_URI?.trim();
+  if (!clientId || !clientSecret || !redirectUriRaw) {
     res.status(500).json({ error: "WEBFLOW_CLIENT_ID, WEBFLOW_CLIENT_SECRET, and WEBFLOW_REDIRECT_URI must be set" });
     return;
   }
+  const redirectUri = normalizeRedirectUri(redirectUriRaw);
 
   try {
     const accessToken = await exchangeAuthorizationCode({
@@ -188,7 +247,7 @@ webflowOAuthRouter.get("/callback", async (req, res) => {
     const message = e instanceof Error ? e.message : "Token exchange failed";
     const hint =
       message.includes("invalid_grant") || message.includes("invalid_redirect_uri")
-        ? "Authorization codes are single-use and expire quickly. Open /api/oauth/webflow/authorize again and complete the flow in one go—do not refresh or reuse an old ?code= URL."
+        ? "Codes are single-use—start from /api/oauth/webflow/authorize and finish without refreshing. If all retries failed, confirm the Redirect URI in Webflow matches WEBFLOW_REDIRECT_URI and contact Webflow support with this error."
         : undefined;
     res.status(500).json(hint ? { error: message, hint } : { error: message });
   }
