@@ -8,6 +8,47 @@ function oauthScopesFromEnv(): OauthScope[] {
 }
 
 /**
+ * Exchange auth code for access token. Uses `application/x-www-form-urlencoded` (RFC 6749),
+ * which Webflow’s token endpoint expects; the `webflow-api` SDK uses JSON and can trigger
+ * misleading `invalid_redirect_uri` responses for some apps.
+ */
+async function exchangeAuthorizationCode(args: {
+  clientId: string;
+  clientSecret: string;
+  code: string;
+  redirectUri: string;
+}): Promise<string> {
+  const params = new URLSearchParams();
+  params.set("client_id", args.clientId);
+  params.set("client_secret", args.clientSecret);
+  params.set("code", args.code);
+  params.set("grant_type", "authorization_code");
+  params.set("redirect_uri", args.redirectUri);
+
+  const tokenRes = await fetch("https://api.webflow.com/oauth/access_token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: params.toString()
+  });
+
+  const text = await tokenRes.text();
+  let json: { access_token?: string; error?: string; error_description?: string };
+  try {
+    json = JSON.parse(text) as typeof json;
+  } catch {
+    throw new Error(`Token endpoint ${tokenRes.status}: ${text.slice(0, 500)}`);
+  }
+
+  if (!tokenRes.ok || json.error) {
+    throw new Error(`Status code: ${tokenRes.status}\nBody: ${JSON.stringify(json)}`);
+  }
+  if (!json.access_token) {
+    throw new Error("Missing access_token in token response");
+  }
+  return json.access_token;
+}
+
+/**
  * OAuth 2.0 (authorization code) for Webflow Data API apps.
  * Register redirect URI in Workspace → Apps & Integrations → your app → Data Client:
  * e.g. http://localhost:8787/api/oauth/webflow/callback
@@ -131,7 +172,7 @@ webflowOAuthRouter.get("/callback", async (req, res) => {
   }
 
   try {
-    const accessToken = await WebflowClient.getAccessToken({
+    const accessToken = await exchangeAuthorizationCode({
       clientId,
       clientSecret,
       code,
@@ -145,6 +186,10 @@ webflowOAuthRouter.get("/callback", async (req, res) => {
     }
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Token exchange failed";
-    res.status(500).json({ error: message });
+    const hint =
+      message.includes("invalid_grant") || message.includes("invalid_redirect_uri")
+        ? "Authorization codes are single-use and expire quickly. Open /api/oauth/webflow/authorize again and complete the flow in one go—do not refresh or reuse an old ?code= URL."
+        : undefined;
+    res.status(500).json(hint ? { error: message, hint } : { error: message });
   }
 });
