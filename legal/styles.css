@@ -118,10 +118,24 @@ body {
 }
 
 .hub__lead {
-  margin: 0 0 2.25rem;
+  margin: 0 auto 2.25rem;
+  max-width: 26rem;
   font-size: 1rem;
   color: var(--text-muted);
   line-height: 1.55;
+}
+
+.hub__lead a {
+  color: var(--accent);
+  font-weight: 500;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(89, 182, 135, 0.35);
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.hub__lead a:hover {
+  color: #7fd4a8;
+  border-bottom-color: var(--accent);
 }
 
 .link-grid {
