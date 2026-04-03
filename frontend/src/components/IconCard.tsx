@@ -266,7 +266,7 @@ export default function IconCard(props: { icon: IconSearchItem }) {
             onClick={onCopySvg}
             disabled={!svg || busy}
             className={dockBtnClass}
-            title="Minimal &lt;svg&gt; with paths only — paste into Webflow or your editor"
+            title="SVG with width/height 100% — put it in a wrapper and size the wrapper with a Webflow class (like Figma export)"
           >
             {busyAction === "svg" ? "…" : "Copy SVG code"}
           </button>

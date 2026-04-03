@@ -1,17 +1,9 @@
 /**
  * Produces a small, hand-editable SVG string for clipboard paste (e.g. into Webflow):
- * `<svg …>` with `xmlns`, `viewBox`, `width` / `height`, then inner elements (`<path>`, `<circle>`, …) only.
- * No wrapper divs or utility classes.
+ * `<svg …>` with `xmlns`, `viewBox`, `width="100%"` / `height="100%"`, then inner elements only.
+ * Sizing is controlled by a parent in the Designer (classes on a wrapper or embed), like Figma exports —
+ * not by editing fixed pixel dimensions inside the embed.
  */
-
-function parseViewBox(vb: string): { w: number; h: number } | null {
-  const parts = vb.trim().split(/\s+/);
-  if (parts.length < 4) return null;
-  const w = parseFloat(parts[2]!);
-  const h = parseFloat(parts[3]!);
-  if (!Number.isFinite(w) || !Number.isFinite(h)) return null;
-  return { w, h };
-}
 
 function stripRootNoise(root: Element): void {
   root.removeAttribute("class");
@@ -49,15 +41,6 @@ export function simplifySvgForClipboard(svgMarkup: string): string {
   const vb = root.getAttribute("viewBox");
   if (vb) {
     root.setAttribute("viewBox", vb);
-    const dim = parseViewBox(vb);
-    if (dim) {
-      const wNum = parseFloat(String(root.getAttribute("width") || "").replace(/px$/i, ""));
-      const hNum = parseFloat(String(root.getAttribute("height") || "").replace(/px$/i, ""));
-      if (!Number.isFinite(wNum) || !Number.isFinite(hNum)) {
-        root.setAttribute("width", String(dim.w));
-        root.setAttribute("height", String(dim.h));
-      }
-    }
   } else {
     const w = root.getAttribute("width");
     const h = root.getAttribute("height");
@@ -74,6 +57,14 @@ export function simplifySvgForClipboard(svgMarkup: string): string {
   if (!hadRootFill) {
     root.setAttribute("fill", "none");
   }
+
+  // Figma-style: vector scales to the frame. In Webflow, set width/height (or padding) on a wrapper
+  // via classes; the SVG fills that box.
+  if (!root.getAttribute("preserveAspectRatio")) {
+    root.setAttribute("preserveAspectRatio", "xMidYMid meet");
+  }
+  root.setAttribute("width", "100%");
+  root.setAttribute("height", "100%");
 
   const raw = new XMLSerializer().serializeToString(root);
   return formatLoose(raw);
