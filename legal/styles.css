@@ -1,0 +1,326 @@
+/* IconDock legal pages — shared styles */
+:root {
+  --bg: #0a0c0b;
+  --bg-elevated: #121816;
+  --bg-card: #151c19;
+  --bg-card-hover: #1a2420;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(89, 182, 135, 0.35);
+  --text: #e8ebe9;
+  --text-muted: #8b9a94;
+  --text-dim: #5c6b65;
+  --accent: #59b687;
+  --accent-soft: rgba(89, 182, 135, 0.12);
+  --accent-glow: rgba(89, 182, 135, 0.15);
+  --radius: 14px;
+  --radius-sm: 10px;
+  --font: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  --shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.45);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font);
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--text);
+  background: var(--bg);
+  background-image:
+    radial-gradient(ellipse 120% 80% at 50% -30%, var(--accent-glow), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 100% 0%, rgba(30, 60, 50, 0.35), transparent 45%);
+}
+
+/* —— Layout shells —— */
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: clamp(1.5rem, 4vw, 3rem) clamp(1.25rem, 4vw, 2rem) 2rem;
+}
+
+.page--hub {
+  align-items: center;
+  justify-content: center;
+  padding-top: clamp(2rem, 8vh, 4rem);
+  padding-bottom: 3rem;
+}
+
+.page--doc {
+  padding-top: 1.25rem;
+}
+
+/* —— Top nav (document pages) —— */
+.doc-nav {
+  max-width: 44rem;
+  margin: 0 auto 2rem;
+  width: 100%;
+}
+
+.doc-nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: 0.35rem 0.5rem 0.35rem 0;
+  margin: -0.35rem 0 -0.35rem -0.25rem;
+  border-radius: 8px;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.doc-nav a:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.doc-nav svg {
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+/* —— Legal hub (index) —— */
+.hub {
+  width: 100%;
+  max-width: 28rem;
+  text-align: center;
+}
+
+.hub__eyebrow {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 0.75rem;
+}
+
+.hub__title {
+  font-size: clamp(1.85rem, 5vw, 2.35rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  margin: 0 0 0.65rem;
+  color: var(--text);
+}
+
+.hub__lead {
+  margin: 0 0 2.25rem;
+  font-size: 1rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.link-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.legal-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.15rem 1.25rem;
+  text-align: left;
+  text-decoration: none;
+  color: inherit;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease;
+}
+
+.legal-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-strong);
+  background: var(--bg-card-hover);
+}
+
+.legal-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.legal-card__icon {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  background: var(--accent-soft);
+  border-radius: var(--radius-sm);
+  color: var(--accent);
+}
+
+.legal-card__icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.legal-card__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.legal-card__label {
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin-bottom: 0.2rem;
+}
+
+.legal-card__hint {
+  display: block;
+  font-size: 0.8125rem;
+  color: var(--text-dim);
+  line-height: 1.4;
+}
+
+.legal-card__arrow {
+  flex-shrink: 0;
+  color: var(--text-dim);
+  transition: transform 0.18s ease, color 0.18s ease;
+}
+
+.legal-card:hover .legal-card__arrow {
+  transform: translateX(3px);
+  color: var(--accent);
+}
+
+.hub-footer {
+  margin-top: 2.75rem;
+  font-size: 0.8125rem;
+  color: var(--text-dim);
+}
+
+/* —— Document prose —— */
+.article-wrap {
+  max-width: 44rem;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.article {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: clamp(1.5rem, 4vw, 2.25rem) clamp(1.25rem, 3vw, 2rem) clamp(2rem, 4vw, 2.5rem);
+  box-shadow: var(--shadow);
+}
+
+.article h1 {
+  font-size: clamp(1.5rem, 3.5vw, 1.85rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  margin: 0 0 0.35rem;
+  color: var(--text);
+}
+
+.article .meta {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin: 0 0 1.75rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.article h2 {
+  font-size: 1.05rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  margin: 1.65rem 0 0.6rem;
+  color: var(--text);
+}
+
+.article h2:first-of-type {
+  margin-top: 0;
+}
+
+.article p {
+  margin: 0.65rem 0;
+  color: var(--text-muted);
+}
+
+.article ul {
+  margin: 0.5rem 0 0.65rem;
+  padding-left: 1.2rem;
+  color: var(--text-muted);
+}
+
+.article li {
+  margin: 0.4rem 0;
+}
+
+.article li::marker {
+  color: var(--accent);
+}
+
+.article strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.article a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+  border-bottom: 1px solid rgba(89, 182, 135, 0.35);
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.article a:hover {
+  border-bottom-color: var(--accent);
+  color: #7fd4a8;
+}
+
+.article .contact {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.article-footer {
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.875rem;
+}
+
+.article-footer a {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-weight: 500;
+  border-bottom: none;
+  margin-right: 0.5rem;
+}
+
+.article-footer a:hover {
+  color: var(--accent);
+}
+
+.article-footer .sep {
+  color: var(--text-dim);
+  margin: 0 0.35rem;
+}

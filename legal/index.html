@@ -3,21 +3,61 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>IconDock — Legal</title>
-  <style>
-    :root { color-scheme: light dark; }
-    body { font-family: system-ui, sans-serif; line-height: 1.6; max-width: 36rem; margin: 3rem auto; padding: 0 1.25rem; color: #111; }
-    @media (prefers-color-scheme: dark) { body { color: #e8e8e8; background: #121212; } a { color: #7ec8ff; } }
-    h1 { font-size: 1.5rem; }
-    ul { padding-left: 1.25rem; }
-    a { color: #0b57d0; }
-  </style>
+  <meta name="description" content="Terms and Privacy Policy for IconDock, a Webflow Designer extension." />
+  <title>Legal — IconDock</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
-  <h1>IconDock — Legal</h1>
-  <ul>
-    <li><a href="./terms.html">Terms and Conditions</a></li>
-    <li><a href="./privacy.html">Privacy Policy</a></li>
-  </ul>
+  <div class="page page--hub">
+    <main class="hub" aria-labelledby="hub-title">
+      <p class="hub__eyebrow">IconDock</p>
+      <h1 id="hub-title" class="hub__title">Legal</h1>
+      <p class="hub__lead">
+        Terms of use and privacy information for the Webflow Designer extension.
+      </p>
+
+      <div class="link-grid">
+        <a class="legal-card" href="./terms.html">
+          <span class="legal-card__icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" />
+            </svg>
+          </span>
+          <span class="legal-card__body">
+            <span class="legal-card__label">Terms and Conditions</span>
+            <span class="legal-card__hint">Rules and disclaimers for using IconDock</span>
+          </span>
+          <span class="legal-card__arrow" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          </span>
+        </a>
+
+        <a class="legal-card" href="./privacy.html">
+          <span class="legal-card__icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+          </span>
+          <span class="legal-card__body">
+            <span class="legal-card__label">Privacy Policy</span>
+            <span class="legal-card__hint">How we handle data when you use the app</span>
+          </span>
+          <span class="legal-card__arrow" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          </span>
+        </a>
+      </div>
+
+      <p class="hub-footer">IconDock · Webflow Designer extension</p>
+    </main>
+  </div>
 </body>
 </html>
