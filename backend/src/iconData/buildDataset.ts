@@ -12,6 +12,10 @@ const DATA_DIR = path.join(__dirname, "../../data");
 const SVG_OUT_DIR = path.join(DATA_DIR, "svgs");
 const MANIFEST_PATH = path.join(DATA_DIR, "manifest.json");
 
+function manifestSvgPath(absolutePath: string): string {
+  return path.relative(DATA_DIR, absolutePath).split(path.sep).join("/");
+}
+
 type BuiltIcon = {
   id: string;
   name: string;
@@ -163,7 +167,7 @@ async function buildMaterial(): Promise<BuiltIcon[]> {
         styles: [styleLabel, variant],
         tags,
         searchText: searchText({ name, variant, library: "material", tags }),
-        svgPath: svgOutPath
+        svgPath: manifestSvgPath(svgOutPath)
       });
 
       if (MAX_ICONS_PER_LIBRARY > 0 && built.length >= MAX_ICONS_PER_LIBRARY) {
@@ -201,7 +205,7 @@ async function buildFontAwesome(): Promise<BuiltIcon[]> {
         styles: [styleLabel, variant],
         tags,
         searchText: searchText({ name, variant, library: "fontawesome", tags }),
-        svgPath: svgOutPath
+        svgPath: manifestSvgPath(svgOutPath)
       });
 
       if (MAX_ICONS_PER_LIBRARY > 0 && built.length >= MAX_ICONS_PER_LIBRARY) {
@@ -239,7 +243,7 @@ async function buildHeroicons(): Promise<BuiltIcon[]> {
         styles: [styleLabel, variant],
         tags,
         searchText: searchText({ name, variant, library: "heroicons", tags }),
-        svgPath: svgOutPath
+        svgPath: manifestSvgPath(svgOutPath)
       });
 
       if (MAX_ICONS_PER_LIBRARY > 0 && built.length >= MAX_ICONS_PER_LIBRARY) {
@@ -277,7 +281,7 @@ async function buildGenericLibrary(args: {
         styles: [styleLabel, variant],
         tags,
         searchText: searchText({ name, variant, library: args.library, tags }),
-        svgPath: svgOutPath
+        svgPath: manifestSvgPath(svgOutPath)
       });
       if (MAX_ICONS_PER_LIBRARY > 0 && built.length >= MAX_ICONS_PER_LIBRARY) return built;
     }

@@ -12,8 +12,8 @@ import type {
  * - **Vite dev** (`localhost:5173`): relative `/api` is proxied — base is empty.
  * - **`webflow extension serve`** (default **localhost:1337**): static bundle must call the API on another origin; use
  *   `http://localhost:8787` (or 127.0.0.1 when the host is 127.0.0.1).
- * - **Hosted Designer Extension** (`https://*.webflow-ext.com`): relative `/api` would hit Webflow — wrong; use
- *   `http://localhost:8787` (or set `VITE_API_BASE_URL` to a deployed HTTPS API for production).
+ * - **Hosted Designer Extension** (`https://*.webflow-ext.com`): must set `VITE_API_BASE_URL` to a **public HTTPS**
+ *   API at build time. Never uses `http://localhost:8787` here — browsers block mixed content from https iframes.
  */
 function resolveApiBase(): string {
   const raw = import.meta.env.VITE_API_BASE_URL as string | undefined;
@@ -42,9 +42,9 @@ function resolveApiBase(): string {
     return apiLoopbackOrigin;
   }
 
-  // Hosted extension (Designer loads from webflow-ext.com); relative `/api` has no backend.
+  // Hosted Designer: https://*.webflow-ext.com cannot call http://localhost (mixed content / unreachable).
   if (isWebflowExt) {
-    return "http://localhost:8787";
+    return "";
   }
 
   return "";
@@ -53,17 +53,33 @@ function resolveApiBase(): string {
 function apiUrl(path: string): string {
   const base = resolveApiBase();
   const p = path.startsWith("/") ? path : `/${path}`;
+  if (
+    typeof window !== "undefined" &&
+    window.location.hostname.endsWith(".webflow-ext.com") &&
+    base === ""
+  ) {
+    throw new Error(
+      "This build has no VITE_API_BASE_URL. Rebuild with VITE_API_BASE_URL=https://your-api.example.com (e.g. your Render URL) and run webflow extension bundle again."
+    );
+  }
   return `${base}${p}`;
 }
 
+function requestUrlString(input: RequestInfo): string {
+  if (typeof input === "string") return input;
+  if (input instanceof Request) return input.url;
+  return String(input);
+}
+
 async function fetchJson<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
+  const urlStr = requestUrlString(input);
   let res: Response;
   try {
-    res = await fetch(input, init);
+    res = await fetch(input, { ...init, mode: "cors" });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Failed to fetch";
     throw new Error(
-      `${msg}. Start the IconDock API on port 8787 (run \`npm run dev\` in the backend folder), or set VITE_API_BASE_URL to your API origin and rebuild.`
+      `${msg} — request was: ${urlStr}. Tips: hard-refresh the extension (or re-run webflow extension serve after npm run build). In Designer, upload a bundle built with VITE_API_BASE_URL. For 1337 without that var, run backend on :8787. Check DevTools Console for blocked:csp / net::ERR_.`
     );
   }
   if (!res.ok) {

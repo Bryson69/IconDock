@@ -18,7 +18,7 @@ export type IconRecord = {
   styles: string[]; // all style labels attached to this icon
   tags: string[]; // lowercase
   searchText: string; // lowercase consolidated text for search
-  svgPath: string; // absolute path on disk
+  svgPath: string; // resolved absolute path for fs reads (manifest stores portable paths under data/)
 };
 
 export type IconDataset = {

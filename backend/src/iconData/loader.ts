@@ -33,6 +33,19 @@ async function fileExists(filePath: string): Promise<boolean> {
   }
 }
 
+/** Manifest may store `svgs/...` (portable) or legacy absolute paths from the machine that ran build:dataset. */
+function resolveSvgDiskPath(stored: string): string {
+  const unified = stored.replace(/\\/g, "/");
+  const m = unified.match(/\/data\/(svgs\/.+)$/i);
+  if (m?.[1]) {
+    return path.join(DATA_DIR, ...m[1].split("/").filter(Boolean));
+  }
+  if (!path.isAbsolute(stored)) {
+    return path.join(DATA_DIR, ...unified.split("/").filter(Boolean));
+  }
+  return stored;
+}
+
 export async function getDatasetInfo(): Promise<IconDataset | null> {
   if (cachedDataset) return cachedDataset;
   if (datasetLoadPromise) return datasetLoadPromise;
@@ -61,7 +74,7 @@ export async function getDatasetInfo(): Promise<IconDataset | null> {
         styles,
         tags,
         searchText: String((i as any).searchText ?? ""),
-        svgPath: i.svgPath
+        svgPath: resolveSvgDiskPath(i.svgPath)
       };
     });
 
